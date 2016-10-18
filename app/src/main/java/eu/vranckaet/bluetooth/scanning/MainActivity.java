@@ -3,6 +3,9 @@ package eu.vranckaet.bluetooth.scanning;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -19,8 +22,8 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver mReceiver; // For normal bluetooth scanning
-    private BluetoothAdapter bluetoothAdapter; // For BLE scanning
-    private BluetoothAdapter.LeScanCallback leScanCallback; // For BLE scanning
+    private BluetoothLeScanner bluetoothLEScanner; // For BLE scanning
+    private ScanCallback leScanCallback; // For BLE scanning
 
     private boolean bluetoothReceiverRegistered;
     private boolean scanning = false;
@@ -42,11 +45,12 @@ public class MainActivity extends AppCompatActivity {
         startAllBluetoothScanning();
     }
 
-    private BluetoothAdapter getBluetoothAdapter() {
-        if (bluetoothAdapter == null) {
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    private BluetoothLeScanner getBluetoothLEScanner() {
+        if (bluetoothLEScanner == null) {
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            bluetoothLEScanner = bluetoothAdapter.getBluetoothLeScanner();
         }
-        return bluetoothAdapter;
+        return bluetoothLEScanner;
     }
 
     private void onBluetoothDeviceDiscovered(BluetoothDevice device) {
@@ -125,14 +129,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startBLEScanning() {
-        leScanCallback = new BluetoothAdapter.LeScanCallback() {
+        leScanCallback = new ScanCallback() {
             @Override
-            public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+            public void onScanResult(int callbackType, ScanResult result) {
                 Log.d("dirk", "Bluetooth LE device discovered...");
-                onBluetoothDeviceDiscovered(device);
+                onBluetoothDeviceDiscovered(result.getDevice());
             }
         };
-        getBluetoothAdapter().startLeScan(leScanCallback);
+        getBluetoothLEScanner().startScan(leScanCallback);
         Log.d("dirk", "BLE Scanning started");
     }
 
@@ -149,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void stopBLEScanning() {
         if (leScanCallback != null) {
-            getBluetoothAdapter().stopLeScan(leScanCallback);
+            getBluetoothLEScanner().stopScan(leScanCallback);
         }
     }
 
